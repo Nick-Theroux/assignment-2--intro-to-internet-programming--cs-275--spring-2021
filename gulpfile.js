@@ -1,11 +1,11 @@
 const {src, dest, watch, series} = require('gulp');
 const sass = require('gulp-sass');
 const babel = require('gulp-babel');
-//const htmlValidator = require('gulp-html')
+const htmlValidator = require('gulp-html') //There seems to be an issue with my gulp-html module issue was looked intp but not fixed
 const htmlCompressor = require('gulp-htmlmin');
-const cssLinter = require('gulp-stylelint');
-//const jsLinter = require('gulp-eslint');
-const browserSync = require('browser-sync').create();
+const cssLinter = require('gulp-stylelint'); //There seems to be an issue with my gulp-stylelint module issue was not fixed
+const jsLinter = require('gulp-eslint'); //There seems to be an issue with my gulp-eslint module issue was not fixed
+const browserSync = require('browser-sync');
 const jsCompressor = require('gulp-uglify');
 const reload = browserSync.reload;
 
@@ -14,14 +14,18 @@ async function edge (){
     browserChoice = "mircrosoft-edge";
 };
 
-async function allbrowsers(){
-    browserChoice["mircrosoft-edge"]
+async function chrome (){
+    browserChoice = "chrome";
 };
 
-//let validateHTML = () => {
-//    return src('dev/*.html')
-//        .pipe(htmlValidator)
-//};
+async function allbrowsers(){
+    browserChoice["mircrosoft-edge", "chrome"]
+};
+
+let validateHTML = () => {
+    return src('dev/*.html')
+        .pipe(htmlValidator) //error seems to occur here couses problems with the serve task
+};
 
 let compressHTML = () => {
     return src('dev/*.html')
@@ -48,29 +52,29 @@ let compileCSSForProd = () => {
         .pipe(dest('prod/css'));
 };
 
-//let lintJS = () => {
-//    return src('dev/js/*.js')
-//        .pipe(jsLinter({
-//            parserOptions: {
-//               ecmaVersion: 2017,
-//                sourceType: 'module'
-//            },
-//            rules:{
-//                indent: [2, 4, {SwitchCase: 1}],
-//                quotes: [2, 'backtick'],
-//                semi:   [2,'always'],
-//                'linebreakstyle': [2, 'unix'],
-//                'max-len': [1, 85, 4]
-//            },
-//            env: {
-//                es6: true,
-//                node: true,
-//                browser: true
-//            },
-//            extends: 'esLint:recommended'
-//        }))
-//       .pipe(jsLinter.formatEach('compact', process.stderr));
-//};
+let lintJS = () => {
+    return src('dev/js/*.js')
+        .pipe(jsLinter({ //Does not work due to issue with node module
+            parserOptions: {
+               ecmaVersion: 2017,
+                sourceType: 'module'
+            },
+            rules:{
+                indent: [2, 4, {SwitchCase: 1}],
+                quotes: [2, 'backtick'],
+                semi:   [2,'always'],
+                'linebreakstyle': [2, 'unix'],
+                'max-len': [1, 85, 4]
+            },
+            env: {
+                es6: true,
+                node: true,
+                browser: true
+            },
+            extends: 'esLint:recommended'
+        }))
+       .pipe(jsLinter.formatEach('compact', process.stderr));
+};
 
 let transpileJSForProd = () => {
     return src('dev/js/*.js')
@@ -118,7 +122,7 @@ async function clean() {
 }
 
 exports.clean = clean
-//exports.validateHTML = validateHTML;
+exports.validateHTML = validateHTML;
 exports.compressHTML = compressHTML;
 exports.lintCSS = lintCSS
 exports.build = series(
@@ -126,4 +130,4 @@ exports.build = series(
     compileCSSForProd,
     transpileJSForProd
 );
-exports.serve = series(compressHTML, lintCSS)
+exports.serve = series(validateHTML, compressHTML, lintCSS, jsLinter)
